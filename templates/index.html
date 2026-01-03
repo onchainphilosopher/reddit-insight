@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Insight Miner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent-orange: #ff6b35;
+            --accent-purple: #9d4edd;
+            --accent-cyan: #00d4aa;
+            --accent-pink: #ff006e;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --border-color: #2a2a3a;
+            --gradient-1: linear-gradient(135deg, #ff6b35 0%, #ff006e 100%);
+            --gradient-2: linear-gradient(135deg, #9d4edd 0%, #00d4aa 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Animated background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(157, 78, 221, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 107, 53, 0.1), transparent),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(0, 212, 170, 0.08), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .url-input {
+            flex: 1;
+            min-width: 280px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.15);
+        }
+
+        .url-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .analyze-btn {
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.35);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .loading .spinner {
+            display: block;
+        }
+
+        .loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .subreddit-badge {
+            background: var(--gradient-2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .comment-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: border-color 0.3s;
+        }
+
+        .insight-card:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .insight-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .insight-card h3 .icon {
+            font-size: 1.25rem;
+        }
+
+        .pain-points h3 { color: var(--accent-pink); }
+        .buying-intent h3 { color: var(--accent-cyan); }
+        .unmet-needs h3 { color: var(--accent-purple); }
+        .objections h3 { color: #ffa500; }
+        .patterns h3 { color: var(--accent-orange); }
+        .product-ideas h3 { color: var(--accent-cyan); }
+        .golden-quotes h3 { color: #ffd700; }
+        .next-steps h3 { color: #00ff88; }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+        }
+        .severity-critical { background: rgba(255, 0, 110, 0.3); color: var(--accent-pink); }
+        .severity-high { background: rgba(255, 107, 53, 0.3); color: var(--accent-orange); }
+        .severity-medium { background: rgba(157, 78, 221, 0.3); color: var(--accent-purple); }
+        .severity-low { background: rgba(136, 136, 160, 0.3); color: var(--text-secondary); }
+
+        .insight-detail {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .insight-detail strong {
+            color: var(--text-primary);
+        }
+
+        .insight-list {
+            list-style: none;
+        }
+
+        .insight-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .insight-list li:last-child {
+            border-bottom: none;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .insight-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .quote {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            border-left: 3px solid var(--accent-purple);
+            color: var(--text-secondary);
+        }
+
+        .pattern-tag {
+            display: inline-block;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        /* Raw Data Toggle */
+        .raw-data-section {
+            margin-top: 2rem;
+        }
+
+        .toggle-raw {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            color: var(--text-secondary);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-raw:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .raw-data {
+            display: none;
+            margin-top: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .raw-data.active {
+            display: block;
+        }
+
+        .raw-data pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* No API Key Mode */
+        .no-key-section {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .no-key-section h2 {
+            color: var(--accent-cyan);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .no-key-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .copy-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .copy-btn {
+            background: var(--gradient-2);
+            border: none;
+            border-radius: 10px;
+            padding: 0.875rem 1.5rem;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+        }
+
+        .copy-btn.copied {
+            background: var(--accent-cyan);
+        }
+
+        .copy-btn-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .btn-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding-left: 0.25rem;
+        }
+
+        .llm-links {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .llm-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .llm-link:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        .prompt-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow: auto;
+            margin-top: 1rem;
+        }
+
+        .prompt-box pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Error */
+        .error {
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px solid var(--accent-pink);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-pink);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent-orange);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.75rem; }
+            .container { padding: 1.5rem 1rem; }
+            .input-section { padding: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">⛏️</div>
+                <h1>Reddit Insight Miner</h1>
+            </div>
+            <p class="tagline">Extract pain points, buying intent & product ideas from any Reddit thread</p>
+        </header>
+
+        <section class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    class="url-input" 
+                    id="reddit-url" 
+                    placeholder="Paste a thread URL: reddit.com/r/SaaS/comments/abc123/..."
+                    autocomplete="off"
+                >
+                <button class="analyze-btn" id="analyze-btn" onclick="analyze()">
+                    <span class="btn-text">🔍 Analyze Thread</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+        </section>
+
+        <div id="error-container"></div>
+
+        <section class="no-key-results" id="no-key-results" style="display: none;">
+            <div class="result-header">
+                <span class="subreddit-badge" id="no-key-subreddit">r/subreddit</span>
+                <span class="comment-count" id="no-key-comment-count">0 comments analyzed</span>
+            </div>
+
+            <div class="no-key-section">
+                <h2>📋 Ready to Analyze!</h2>
+                <p>No OpenAI API key detected. Copy the prompt below and paste it into any LLM:</p>
+                
+                <div class="copy-buttons">
+                    <div class="copy-btn-wrapper">
+                        <button class="copy-btn" onclick="copyPrompt()" id="copy-prompt-btn">
+                            📋 Copy Analysis Prompt
+                        </button>
+                        <span class="btn-hint">Thread + instructions for the LLM</span>
+                    </div>
+                    <div class="copy-btn-wrapper">
+                        <button class="copy-btn" onclick="copyRawData()" id="copy-raw-btn" style="background: var(--gradient-1);">
+                            📄 Copy Raw Thread Data
+                        </button>
+                        <span class="btn-hint">Just the comments, no prompt</span>
+                    </div>
+                </div>
+
+                <div class="llm-links">
+                    <a href="https://chat.openai.com" target="_blank" class="llm-link">🤖 ChatGPT</a>
+                    <a href="https://claude.ai" target="_blank" class="llm-link">🧠 Claude</a>
+                    <a href="https://gemini.google.com" target="_blank" class="llm-link">✨ Gemini</a>
+                    <a href="https://poe.com" target="_blank" class="llm-link">💬 Poe</a>
+                </div>
+
+                <div class="prompt-box">
+                    <pre id="prompt-content"></pre>
+                </div>
+            </div>
+
+            <div class="raw-data-section">
+                <button class="toggle-raw" onclick="toggleRawDataNoKey()">📄 Show Raw Thread Data</button>
+                <div class="raw-data" id="raw-data-no-key">
+                    <pre id="raw-data-content-no-key"></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="results" id="results">
+            <div class="result-header">
+                <span class="subreddit-badge" id="subreddit-name">r/subreddit</span>
+                <span class="comment-count" id="comment-count">0 comments analyzed</span>
+            </div>
+
+            <div class="summary-card">
+                <p id="summary">Loading summary...</p>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-card pain-points">
+                    <h3><span class="icon">🔥</span> Pain Points</h3>
+                    <ul class="insight-list" id="pain-points-list"></ul>
+                </div>
+
+                <div class="insight-card buying-intent">
+                    <h3><span class="icon">💰</span> Buying Intent</h3>
+                    <ul class="insight-list" id="buying-intent-list"></ul>
+                </div>
+
+                <div class="insight-card unmet-needs">
+                    <h3><span class="icon">💡</span> Unmet Needs</h3>
+                    <ul class="insight-list" id="unmet-needs-list"></ul>
+                </div>
+
+                <div class="insight-card objections">
+                    <h3><span class="icon">⚠️</span> Objections & Concerns</h3>
+                    <ul class="insight-list" id="objections-list"></ul>
+                </div>
+            </div>
+
+            <div class="insight-card product-ideas" style="margin-bottom: 1.5rem;">
+                <h3><span class="icon">🚀</span> Product Ideas</h3>
+                <ul class="insight-list" id="product-ideas-list"></ul>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-card patterns">
+                    <h3><span class="icon">🔄</span> Recurring Patterns</h3>
+                    <div id="patterns-container"></div>
+                </div>
+
+                <div class="insight-card golden-quotes">
+                    <h3><span class="icon">💎</span> Golden Quotes</h3>
+                    <ul class="insight-list" id="golden-quotes-list"></ul>
+                </div>
+            </div>
+
+            <div class="insight-card next-steps" style="margin-bottom: 1.5rem;">
+                <h3><span class="icon">✅</span> Recommended Next Steps</h3>
+                <ul class="insight-list" id="next-steps-list"></ul>
+            </div>
+
+            <div class="raw-data-section">
+                <button class="toggle-raw" onclick="toggleRawData()">📄 Show Raw Thread Data</button>
+                <div class="raw-data" id="raw-data">
+                    <pre id="raw-data-content"></pre>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Tip: Niche subreddits are unmined gold. Try r/SaaS, r/Entrepreneur, r/smallbusiness</p>
+        </footer>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('reddit-url');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const results = document.getElementById('results');
+        const errorContainer = document.getElementById('error-container');
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') analyze();
+        });
+
+        async function analyze() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('Please enter a Reddit URL');
+                return;
+            }
+
+            analyzeBtn.classList.add('loading');
+            analyzeBtn.disabled = true;
+            errorContainer.innerHTML = '';
+            results.classList.remove('active');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+                if (data.error) {
+                    showError(data.error);
+                    if (data.raw_data) {
+                        showRawDataOnly(data.raw_data);
+                    }
+                    return;
+                }
+
+                if (data.no_api_key) {
+                    displayNoKeyResults(data);
+                } else {
+                    displayResults(data);
+                }
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                analyzeBtn.classList.remove('loading');
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">⚠️ ${message}</div>`;
+        }
+
+        function showRawDataOnly(rawData) {
+            document.getElementById('raw-data-content').textContent = rawData;
+            document.getElementById('raw-data').classList.add('active');
+        }
+
+        function displayResults(data) {
+            // Hide no-key section
+            document.getElementById('no-key-results').style.display = 'none';
+
+            // Header
+            document.getElementById('subreddit-name').textContent = `r/${data.subreddit || 'unknown'}`;
+            document.getElementById('comment-count').textContent = `${data.comment_count || 0} comments analyzed`;
+
+            // Summary
+            document.getElementById('summary').textContent = data.summary || 'No summary available';
+
+            // Pain Points (enhanced)
+            const painList = document.getElementById('pain-points-list');
+            painList.innerHTML = '';
+            (data.pain_points || []).forEach(p => {
+                const severityClass = p.severity ? `severity-${p.severity.toLowerCase()}` : '';
+                const severityBadge = p.severity ? `<span class="severity-badge ${severityClass}">${p.severity}</span>` : '';
+                painList.innerHTML += `
+                    <li>
+                        <div class="insight-title">${escapeHtml(p.pain)}${severityBadge}</div>
+                        ${p.who_has_it ? `<div class="insight-detail"><strong>Who:</strong> ${escapeHtml(p.who_has_it)}</div>` : ''}
+                        ${p.why_current_solutions_fail ? `<div class="insight-detail"><strong>Why current solutions fail:</strong> ${escapeHtml(p.why_current_solutions_fail)}</div>` : ''}
+                        <div class="insight-meta">${p.frequency || ''}</div>
+                        ${(p.quotes || []).slice(0, 1).map(q => `<div class="quote">"${escapeHtml(q.substring(0, 200))}"</div>`).join('')}
+                    </li>
+                `;
+            });
+            if (painList.innerHTML === '') painList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Buying Intent (enhanced)
+            const buyingList = document.getElementById('buying-intent-list');
+            buyingList.innerHTML = '';
+            (data.buying_intent || []).forEach(b => {
+                const urgencyBadge = b.urgency ? `<span class="severity-badge severity-${b.urgency.toLowerCase() === 'high' ? 'critical' : b.urgency.toLowerCase()}">${b.urgency} urgency</span>` : '';
+                buyingList.innerHTML += `
+                    <li>
+                        <div class="insight-title">${escapeHtml(b.signal)}${urgencyBadge}</div>
+                        ${b.budget_hints ? `<div class="insight-detail"><strong>Budget hints:</strong> ${escapeHtml(b.budget_hints)}</div>` : ''}
+                        ${(b.quotes || []).slice(0, 1).map(q => `<div class="quote">"${escapeHtml(q.substring(0, 200))}"</div>`).join('')}
+                    </li>
+                `;
+            });
+            if (buyingList.innerHTML === '') buyingList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Unmet Needs (enhanced)
+            const needsList = document.getElementById('unmet-needs-list');
+            needsList.innerHTML = '';
+            (data.unmet_needs || []).forEach(n => {
+                needsList.innerHTML += `
+                    <li>
+                        <div class="insight-title">${escapeHtml(n.need)}</div>
+                        ${n.who_needs_it ? `<div class="insight-detail"><strong>Target:</strong> ${escapeHtml(n.who_needs_it)}</div>` : ''}
+                        ${n.opportunity ? `<div class="insight-detail"><strong>Opportunity:</strong> ${escapeHtml(n.opportunity)}</div>` : ''}
+                        ${(n.quotes || []).slice(0, 1).map(q => `<div class="quote">"${escapeHtml(q.substring(0, 200))}"</div>`).join('')}
+                    </li>
+                `;
+            });
+            if (needsList.innerHTML === '') needsList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Objections & Concerns
+            const objectionsList = document.getElementById('objections-list');
+            objectionsList.innerHTML = '';
+            (data.objections_and_concerns || []).forEach(o => {
+                objectionsList.innerHTML += `
+                    <li>
+                        <div class="insight-title">${escapeHtml(o.objection)}</div>
+                        ${o.how_to_overcome ? `<div class="insight-detail"><strong>How to overcome:</strong> ${escapeHtml(o.how_to_overcome)}</div>` : ''}
+                        ${(o.quotes || []).slice(0, 1).map(q => `<div class="quote">"${escapeHtml(q.substring(0, 200))}"</div>`).join('')}
+                    </li>
+                `;
+            });
+            if (objectionsList.innerHTML === '') objectionsList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Product Ideas (enhanced)
+            const ideasList = document.getElementById('product-ideas-list');
+            ideasList.innerHTML = '';
+            (data.product_ideas || []).forEach(i => {
+                ideasList.innerHTML += `
+                    <li>
+                        <div class="insight-title">🚀 ${escapeHtml(i.idea)}</div>
+                        ${i.target_customer ? `<div class="insight-detail"><strong>Target customer:</strong> ${escapeHtml(i.target_customer)}</div>` : ''}
+                        ${i.problem_solved ? `<div class="insight-detail"><strong>Solves:</strong> ${escapeHtml(i.problem_solved)}</div>` : ''}
+                        ${i.mvp_suggestion ? `<div class="insight-detail"><strong>MVP:</strong> ${escapeHtml(i.mvp_suggestion)}</div>` : ''}
+                        ${i.risk ? `<div class="insight-detail"><strong>⚠️ Risk:</strong> ${escapeHtml(i.risk)}</div>` : ''}
+                        ${i.evidence ? `<div class="insight-meta">${escapeHtml(i.evidence)}</div>` : ''}
+                    </li>
+                `;
+            });
+            if (ideasList.innerHTML === '') ideasList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Patterns (enhanced)
+            const patternsContainer = document.getElementById('patterns-container');
+            patternsContainer.innerHTML = '';
+            (data.patterns || []).forEach(p => {
+                if (typeof p === 'string') {
+                    patternsContainer.innerHTML += `<span class="pattern-tag">${escapeHtml(p)}</span>`;
+                } else {
+                    patternsContainer.innerHTML += `
+                        <div style="margin-bottom: 0.75rem;">
+                            <span class="pattern-tag">${escapeHtml(p.pattern || '')}</span>
+                            ${p.implication ? `<div class="insight-detail" style="margin-top: 0.25rem;">${escapeHtml(p.implication)}</div>` : ''}
+                        </div>
+                    `;
+                }
+            });
+            if (patternsContainer.innerHTML === '') patternsContainer.innerHTML = '<span class="insight-meta">None detected</span>';
+
+            // Golden Quotes
+            const goldenList = document.getElementById('golden-quotes-list');
+            goldenList.innerHTML = '';
+            (data.golden_quotes || []).forEach(q => {
+                goldenList.innerHTML += `<li><div class="quote" style="border-left-color: #ffd700;">"${escapeHtml(q)}"</div></li>`;
+            });
+            if (goldenList.innerHTML === '') goldenList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Next Steps
+            const stepsList = document.getElementById('next-steps-list');
+            stepsList.innerHTML = '';
+            (data.recommended_next_steps || []).forEach((s, i) => {
+                stepsList.innerHTML += `<li><div class="insight-title">${i + 1}. ${escapeHtml(s)}</div></li>`;
+            });
+            if (stepsList.innerHTML === '') stepsList.innerHTML = '<li class="insight-meta">None detected</li>';
+
+            // Raw Data
+            document.getElementById('raw-data-content').textContent = data.raw_data || '';
+            document.getElementById('raw-data').classList.remove('active');
+
+            results.classList.add('active');
+        }
+
+        function toggleRawData() {
+            document.getElementById('raw-data').classList.toggle('active');
+        }
+
+        function toggleRawDataNoKey() {
+            document.getElementById('raw-data-no-key').classList.toggle('active');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Store data for copying
+        let currentPrompt = '';
+        let currentRawData = '';
+
+        function displayNoKeyResults(data) {
+            currentPrompt = data.prompt || '';
+            currentRawData = data.raw_data || '';
+
+            document.getElementById('no-key-subreddit').textContent = `r/${data.subreddit || 'unknown'}`;
+            document.getElementById('no-key-comment-count').textContent = `${data.comment_count || 0} comments extracted`;
+            document.getElementById('prompt-content').textContent = currentPrompt;
+            document.getElementById('raw-data-content-no-key').textContent = currentRawData;
+
+            document.getElementById('no-key-results').style.display = 'block';
+            document.getElementById('results').classList.remove('active');
+        }
+
+        async function copyPrompt() {
+            try {
+                await navigator.clipboard.writeText(currentPrompt);
+                const btn = document.getElementById('copy-prompt-btn');
+                btn.innerHTML = '✅ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '📋 Copy Analysis Prompt';
+                    btn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy. Please select and copy manually.');
+            }
+        }
+
+        async function copyRawData() {
+            try {
+                await navigator.clipboard.writeText(currentRawData);
+                const btn = document.getElementById('copy-raw-btn');
+                btn.innerHTML = '✅ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '📄 Copy Raw Thread Data';
+                    btn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy. Please select and copy manually.');
+            }
+        }
+    </script>
+</body>
+</html>
+
