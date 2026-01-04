@@ -1284,12 +1284,20 @@
                     }
                 }
 
-                if (allResults.length > 0) {
-                    updateLoadingStep('Combining results...');
-                    displayBatchResults(allResults);
-                } else {
+                if (allResults.length === 0) {
                     showError('No threads could be analyzed');
+                    return;
                 }
+
+                // If any result indicates missing API key, show manual copy mode instead of empty insights
+                const anyNoKey = allResults.some(r => r.no_api_key);
+                if (anyNoKey) {
+                    displayNoKeyResults(allResults[0]);
+                    return;
+                }
+
+                updateLoadingStep('Combining results...');
+                displayBatchResults(allResults);
 
             } catch (err) {
                 showError(err.message);
