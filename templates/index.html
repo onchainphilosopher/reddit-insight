@@ -562,27 +562,6 @@
             font-size: 1.25rem;
         }
 
-        /* History Toggle */
-        .history-toggle {
-            position: fixed;
-            top: 1.5rem;
-            right: 5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 50px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            z-index: 100;
-            font-family: 'Sora', sans-serif;
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            transition: all 0.3s;
-        }
-
-        .history-toggle:hover {
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
-        }
 
         /* API Key Input */
         .api-key-section {
@@ -926,11 +905,6 @@
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
         <span class="theme-toggle-icon" id="theme-icon">🌙</span>
     </button>
-
-    <!-- History Button (always visible) -->
-    <button class="history-toggle" onclick="showHistory()" title="View analysis history">
-        📜 History
-    </button>
     
     <div class="container">
         <header>
@@ -1146,8 +1120,6 @@
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
 
-        // Initialize history
-        let analysisHistory = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
         let currentMode = 'single';
 
         // API Key handling
@@ -1259,8 +1231,6 @@
                 if (data.no_api_key) {
                     displayNoKeyResults(data);
                 } else {
-                    // Only save to history when we have actual analysis results
-                    saveToHistory(url, data);
                     displayResults(data);
                 }
 
@@ -1352,55 +1322,6 @@
                 raw_data: results.map(r => r.raw_data || '').join('\n\n--- NEXT THREAD ---\n\n')
             };
             displayResults(combined);
-        }
-
-        // History management
-        function saveToHistory(url, data) {
-            const entry = {
-                id: Date.now(),
-                url,
-                subreddit: data.subreddit,
-                timestamp: new Date().toISOString(),
-                summary: data.summary?.substring(0, 100) || 'No summary',
-                data
-            };
-            analysisHistory.unshift(entry);
-            if (analysisHistory.length > 20) analysisHistory = analysisHistory.slice(0, 20);
-            localStorage.setItem('analysisHistory', JSON.stringify(analysisHistory));
-        }
-
-        function showHistory() {
-            if (analysisHistory.length === 0) {
-                showError('No analysis history yet');
-                return;
-            }
-            
-            let html = '<div class="history-modal"><h3>📜 Analysis History</h3><div class="history-list">';
-            analysisHistory.forEach(entry => {
-                const date = new Date(entry.timestamp).toLocaleDateString();
-                html += `
-                    <div class="history-item" onclick="loadFromHistory(${entry.id})">
-                        <div class="history-sub">r/${entry.subreddit}</div>
-                        <div class="history-date">${date}</div>
-                        <div class="history-summary">${escapeHtml(entry.summary)}...</div>
-                    </div>
-                `;
-            });
-            html += '</div><button class="copy-btn" onclick="closeHistory()" style="margin-top: 1rem;">Close</button></div>';
-            
-            errorContainer.innerHTML = html;
-        }
-
-        function loadFromHistory(id) {
-            const entry = analysisHistory.find(e => e.id === id);
-            if (entry) {
-                displayResults(entry.data);
-                closeHistory();
-            }
-        }
-
-        function closeHistory() {
-            errorContainer.innerHTML = '';
         }
 
         let currentDisplayedData = null;
