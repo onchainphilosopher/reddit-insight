@@ -5,6 +5,7 @@ from openai import OpenAI
 import json
 import re
 import hashlib
+import uuid
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from cachetools import TTLCache
@@ -22,19 +23,20 @@ limiter = Limiter(
 # Cache results for 1 hour (max 100 entries)
 analysis_cache = TTLCache(maxsize=100, ttl=3600)
 
+# Shared results cache (24 hour TTL, max 500 entries)
+share_cache = TTLCache(maxsize=500, ttl=86400)
+
 def get_cache_key(url):
     """Generate cache key from URL"""
     return hashlib.md5(url.encode()).hexdigest()
 
-# Initialize OpenAI client
-client = None
-def get_openai_client():
-    global client
-    if client is None:
-        api_key = os.environ.get('OPENAI_API_KEY')
-        if api_key:
-            client = OpenAI(api_key=api_key)
-    return client
+def get_openai_client(api_key=None):
+    """Get OpenAI client with optional user-provided key"""
+    # Prefer user-provided key, fall back to environment variable
+    key = api_key or os.environ.get('OPENAI_API_KEY')
+    if key:
+        return OpenAI(api_key=key)
+    return None
 
 def normalize_reddit_url(url):
     """Convert various Reddit URL formats to the JSON endpoint"""
@@ -135,9 +137,9 @@ def format_for_llm(comments):
     
     return "\n".join(parts)
 
-def analyze_with_llm(formatted_text, subreddit=""):
+def analyze_with_llm(formatted_text, subreddit="", user_api_key=None):
     """Use OpenAI to extract insights"""
-    openai_client = get_openai_client()
+    openai_client = get_openai_client(user_api_key)
     if not openai_client:
         return {
             'no_api_key': True,
@@ -323,6 +325,7 @@ def analyze():
     try:
         data = request.get_json()
         url = data.get('url', '').strip()
+        user_api_key = data.get('api_key', '').strip() or None
         
         if not url:
             return jsonify({'error': 'Please provide a Reddit URL'}), 400
@@ -335,9 +338,9 @@ def analyze():
                 'error': 'Please paste a specific thread URL, not a subreddit. Example: reddit.com/r/SaaS/comments/abc123/thread_title'
             }), 400
         
-        # Check cache first
+        # Check cache first (only for server-analyzed results, not user-key results)
         cache_key = get_cache_key(url)
-        if cache_key in analysis_cache:
+        if not user_api_key and cache_key in analysis_cache:
             return jsonify(analysis_cache[cache_key])
         
         # Fetch the thread
@@ -359,13 +362,13 @@ def analyze():
         # Format for LLM
         formatted = format_for_llm(comments)
         
-        # Analyze
-        insights = analyze_with_llm(formatted, subreddit)
+        # Analyze with user's API key or server key
+        insights = analyze_with_llm(formatted, subreddit, user_api_key)
         insights['comment_count'] = len([c for c in comments if c['type'] == 'comment'])
         insights['subreddit'] = subreddit
         
-        # Cache the result (only if it's a successful analysis, not a no_api_key response)
-        if not insights.get('no_api_key'):
+        # Cache the result (only for server-analyzed results)
+        if not insights.get('no_api_key') and not user_api_key:
             analysis_cache[cache_key] = insights
         
         return jsonify(insights)
@@ -374,6 +377,91 @@ def analyze():
         return jsonify({'error': f'Failed to fetch Reddit thread: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+
+@app.route('/scan-subreddit', methods=['POST'])
+@limiter.limit("5 per minute")
+def scan_subreddit():
+    """Scan a subreddit for top threads to analyze"""
+    try:
+        data = request.get_json()
+        subreddit = data.get('subreddit', '').strip()
+        
+        # Clean subreddit name
+        subreddit = subreddit.replace('r/', '').replace('/', '')
+        
+        if not subreddit:
+            return jsonify({'error': 'Please provide a subreddit name'}), 400
+        
+        # Fetch top threads from subreddit
+        url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=15"
+        headers = {
+            'User-Agent': 'RedditInsightsTool/1.0 (Educational Purpose)'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        reddit_data = response.json()
+        
+        threads = []
+        children = reddit_data.get('data', {}).get('children', [])
+        
+        for child in children:
+            post = child.get('data', {})
+            # Skip pinned/stickied posts and posts with few comments
+            if post.get('stickied') or post.get('num_comments', 0) < 5:
+                continue
+                
+            threads.append({
+                'title': post.get('title', '')[:100],
+                'url': f"https://reddit.com{post.get('permalink', '')}",
+                'score': post.get('score', 0),
+                'num_comments': post.get('num_comments', 0),
+                'created_utc': post.get('created_utc', 0)
+            })
+        
+        # Sort by engagement (comments * score)
+        threads.sort(key=lambda x: x['num_comments'] * (1 + x['score'] / 100), reverse=True)
+        
+        return jsonify({
+            'subreddit': subreddit,
+            'threads': threads[:10]
+        })
+        
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Failed to fetch subreddit: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Scan failed: {str(e)}'}), 500
+
+
+@app.route('/share', methods=['POST'])
+@limiter.limit("10 per minute")
+def share_results():
+    """Create a shareable link for analysis results"""
+    try:
+        data = request.get_json()
+        
+        # Generate unique share ID
+        share_id = str(uuid.uuid4())[:8]
+        
+        # Store in cache
+        share_cache[share_id] = data
+        
+        return jsonify({'share_id': share_id})
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to create share link: {str(e)}'}), 500
+
+
+@app.route('/s/<share_id>')
+def view_shared(share_id):
+    """View shared analysis results"""
+    if share_id in share_cache:
+        # Render the index page with pre-loaded data
+        return render_template('shared.html', data=share_cache[share_id])
+    else:
+        return render_template('index.html')  # Fallback to main page
+
 
 @app.errorhandler(429)
 def ratelimit_handler(e):

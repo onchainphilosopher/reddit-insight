@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Analysis | Reddit Insight Miner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent-orange: #ff6b35;
+            --accent-purple: #9d4edd;
+            --accent-cyan: #00d4aa;
+            --accent-pink: #ff006e;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --border-color: #2a2a3a;
+            --gradient-1: linear-gradient(135deg, #ff6b35 0%, #ff006e 100%);
+            --gradient-2: linear-gradient(135deg, #9d4edd 0%, #00d4aa 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(157, 78, 221, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 107, 53, 0.1), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .shared-badge {
+            display: inline-block;
+            background: var(--gradient-2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .result-header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .subreddit-badge {
+            background: var(--accent-orange);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .comment-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .insight-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insight-list {
+            list-style: none;
+        }
+
+        .insight-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .insight-list li:last-child {
+            border-bottom: none;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .insight-detail {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .quote {
+            font-style: italic;
+            color: var(--accent-cyan);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            padding-left: 0.75rem;
+            border-left: 2px solid var(--accent-cyan);
+        }
+
+        .severity-badge {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+        }
+
+        .severity-critical { background: #ff006e33; color: var(--accent-pink); }
+        .severity-high { background: #ff6b3533; color: var(--accent-orange); }
+        .severity-medium { background: #9d4edd33; color: var(--accent-purple); }
+        .severity-low { background: #00d4aa33; color: var(--accent-cyan); }
+
+        .pattern-tag {
+            display: inline-block;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin: 0.25rem;
+        }
+
+        .insight-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: var(--gradient-1);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="container">
+        <header>
+            <h1>⛏️ Reddit Insight Miner</h1>
+            <span class="shared-badge">📤 Shared Analysis</span>
+        </header>
+
+        <div class="result-header">
+            <span class="subreddit-badge">r/{{ data.subreddit or 'unknown' }}</span>
+            <span class="comment-count">{{ data.comment_count or 0 }} comments analyzed</span>
+        </div>
+
+        <div class="summary-card">
+            <p>{{ data.summary or 'No summary available' }}</p>
+        </div>
+
+        <div class="insight-grid">
+            <div class="insight-card">
+                <h3>🔥 Pain Points</h3>
+                <ul class="insight-list">
+                    {% for p in data.pain_points or [] %}
+                    <li>
+                        <div class="insight-title">{{ p.pain }}
+                            {% if p.severity %}
+                            <span class="severity-badge severity-{{ p.severity|lower }}">{{ p.severity }}</span>
+                            {% endif %}
+                        </div>
+                        {% if p.who_has_it %}<div class="insight-detail"><strong>Who:</strong> {{ p.who_has_it }}</div>{% endif %}
+                        {% if p.quotes and p.quotes|length > 0 %}
+                        <div class="quote">"{{ p.quotes[0][:200] }}"</div>
+                        {% endif %}
+                    </li>
+                    {% else %}
+                    <li class="insight-meta">None detected</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="insight-card">
+                <h3>💰 Buying Intent</h3>
+                <ul class="insight-list">
+                    {% for b in data.buying_intent or [] %}
+                    <li>
+                        <div class="insight-title">{{ b.signal }}</div>
+                        {% if b.budget_hints %}<div class="insight-detail"><strong>Budget:</strong> {{ b.budget_hints }}</div>{% endif %}
+                    </li>
+                    {% else %}
+                    <li class="insight-meta">None detected</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="insight-card">
+                <h3>💡 Unmet Needs</h3>
+                <ul class="insight-list">
+                    {% for n in data.unmet_needs or [] %}
+                    <li>
+                        <div class="insight-title">{{ n.need }}</div>
+                        {% if n.opportunity %}<div class="insight-detail"><strong>Opportunity:</strong> {{ n.opportunity }}</div>{% endif %}
+                    </li>
+                    {% else %}
+                    <li class="insight-meta">None detected</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="insight-card">
+                <h3>⚠️ Objections</h3>
+                <ul class="insight-list">
+                    {% for o in data.objections_and_concerns or [] %}
+                    <li>
+                        <div class="insight-title">{{ o.objection }}</div>
+                        {% if o.how_to_overcome %}<div class="insight-detail">{{ o.how_to_overcome }}</div>{% endif %}
+                    </li>
+                    {% else %}
+                    <li class="insight-meta">None detected</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom: 1.5rem;">
+            <h3>🚀 Product Ideas</h3>
+            <ul class="insight-list">
+                {% for i in data.product_ideas or [] %}
+                <li>
+                    <div class="insight-title">🚀 {{ i.idea }}</div>
+                    {% if i.target_customer %}<div class="insight-detail"><strong>Target:</strong> {{ i.target_customer }}</div>{% endif %}
+                    {% if i.mvp_suggestion %}<div class="insight-detail"><strong>MVP:</strong> {{ i.mvp_suggestion }}</div>{% endif %}
+                </li>
+                {% else %}
+                <li class="insight-meta">None detected</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if data.golden_quotes and data.golden_quotes|length > 0 %}
+        <div class="insight-card" style="margin-bottom: 1.5rem;">
+            <h3>💎 Golden Quotes</h3>
+            <ul class="insight-list">
+                {% for q in data.golden_quotes %}
+                <li><div class="quote" style="border-left-color: #ffd700;">"{{ q }}"</div></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <footer>
+            <a href="/" class="cta-btn">🔍 Analyze Your Own Thread</a>
+            <p style="margin-top: 1.5rem;">Powered by Reddit Insight Miner</p>
+        </footer>
+    </div>
+</body>
+</html>
+

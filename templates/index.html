@@ -23,6 +23,23 @@
             --gradient-2: linear-gradient(135deg, #9d4edd 0%, #00d4aa 100%);
         }
 
+        /* Light Mode */
+        [data-theme="light"] {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b6b80;
+            --border-color: #e0e0e8;
+        }
+
+        [data-theme="light"] .bg-pattern {
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(157, 78, 221, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 107, 53, 0.05), transparent),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(0, 212, 170, 0.04), transparent);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -520,16 +537,373 @@
             text-decoration: none;
         }
 
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .theme-toggle-icon {
+            font-size: 1.25rem;
+        }
+
+        /* API Key Input */
+        .api-key-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .api-key-section label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .api-key-input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .api-key-status {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 50px;
+        }
+
+        .api-key-status.active {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--accent-cyan);
+        }
+
+        .api-key-status.inactive {
+            background: rgba(136, 136, 160, 0.2);
+            color: var(--text-secondary);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .loading-step {
+            color: var(--accent-cyan);
+            font-size: 0.9rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Copy Button for Insights */
+        .insight-copy-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-left: auto;
+            transition: all 0.2s;
+        }
+
+        .insight-copy-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        /* Batch Mode */
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--bg-card);
+            border-color: var(--accent-orange);
+            color: var(--text-primary);
+        }
+
+        .mode-btn:hover:not(.active) {
+            border-color: var(--accent-purple);
+        }
+
+        .batch-input {
+            display: none;
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .batch-input.active {
+            display: block;
+        }
+
+        .batch-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .single-input.hidden {
+            display: none;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        /* Scanner Section */
+        .scanner-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .scanner-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .scanner-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .scanner-input-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .scanner-input-group .url-input {
+            flex: 1;
+        }
+
+        .scanner-results {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .thread-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .thread-card:hover {
+            border-color: var(--accent-orange);
+            transform: translateX(4px);
+        }
+
+        .thread-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .thread-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* History Modal */
+        .history-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .history-modal h3 {
+            margin-bottom: 1rem;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .history-sub {
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        .history-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .history-summary {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-top: 0.25rem;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             h1 { font-size: 1.75rem; }
             .container { padding: 1.5rem 1rem; }
             .input-section { padding: 1.25rem; }
+            .theme-toggle { top: 1rem; right: 1rem; }
+            .scanner-input-group { flex-direction: column; }
+            .action-buttons { justify-content: stretch; }
+            .action-btn { flex: 1; text-align: center; }
         }
     </style>
 </head>
 <body>
     <div class="bg-pattern"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loader"></div>
+        <div class="loading-text">Analyzing Reddit thread...</div>
+        <div class="loading-step" id="loading-step">Fetching comments...</div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+    </button>
     
     <div class="container">
         <header>
@@ -540,8 +914,32 @@
             <p class="tagline">Extract pain points, buying intent & product ideas from any Reddit thread</p>
         </header>
 
+        <!-- API Key Section -->
+        <div class="api-key-section">
+            <label>🔑 Your OpenAI Key (optional):</label>
+            <input 
+                type="password" 
+                class="api-key-input" 
+                id="api-key-input" 
+                placeholder="sk-... (enables auto-analysis)"
+                autocomplete="off"
+            >
+            <span class="api-key-status inactive" id="api-key-status">Manual mode</span>
+        </div>
+
         <section class="input-section">
-            <div class="input-group">
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="single-mode-btn" onclick="setMode('single')">
+                    📄 Single Thread
+                </button>
+                <button class="mode-btn" id="batch-mode-btn" onclick="setMode('batch')">
+                    📚 Batch Analysis
+                </button>
+            </div>
+
+            <!-- Single URL Input -->
+            <div class="input-group single-input" id="single-input">
                 <input 
                     type="text" 
                     class="url-input" 
@@ -554,6 +952,17 @@
                     <div class="spinner"></div>
                 </button>
             </div>
+
+            <!-- Batch Input -->
+            <textarea 
+                class="batch-input" 
+                id="batch-input" 
+                placeholder="Paste multiple Reddit thread URLs (one per line):&#10;https://reddit.com/r/SaaS/comments/abc123/...&#10;https://reddit.com/r/Entrepreneur/comments/def456/...&#10;https://reddit.com/r/startups/comments/ghi789/..."
+            ></textarea>
+            <button class="analyze-btn" id="batch-analyze-btn" onclick="analyzeBatch()" style="display: none; width: 100%;">
+                <span class="btn-text">🔍 Analyze All Threads</span>
+                <div class="spinner"></div>
+            </button>
         </section>
 
         <div id="error-container"></div>
@@ -665,6 +1074,34 @@
             </div>
         </section>
 
+        <!-- Action Buttons -->
+        <div class="action-buttons" id="action-buttons" style="display: none;">
+            <button class="action-btn" onclick="exportToCsv()">📊 Export CSV</button>
+            <button class="action-btn" onclick="exportToJson()">📄 Export JSON</button>
+            <button class="action-btn" onclick="shareResults()">🔗 Share Link</button>
+            <button class="action-btn" onclick="showHistory()">📜 History</button>
+        </div>
+
+        <!-- Subreddit Scanner -->
+        <section class="scanner-section">
+            <h3>🔍 Subreddit Scanner</h3>
+            <p class="scanner-desc">Find the hottest threads with pain points in any subreddit</p>
+            <div class="scanner-input-group">
+                <input 
+                    type="text" 
+                    class="url-input" 
+                    id="subreddit-input" 
+                    placeholder="Enter subreddit name: SaaS, Entrepreneur, startups..."
+                    autocomplete="off"
+                >
+                <button class="analyze-btn" id="scan-btn" onclick="scanSubreddit()">
+                    <span class="btn-text">🔎 Scan Top Threads</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+            <div id="scanner-results"></div>
+        </section>
+
         <footer>
             <p>Tip: Niche subreddits are unmined gold. Try r/SaaS, r/Entrepreneur, r/smallbusiness</p>
         </footer>
@@ -675,6 +1112,83 @@
         const analyzeBtn = document.getElementById('analyze-btn');
         const results = document.getElementById('results');
         const errorContainer = document.getElementById('error-container');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingStep = document.getElementById('loading-step');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const apiKeyStatus = document.getElementById('api-key-status');
+
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        // Initialize history
+        let analysisHistory = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
+        let currentMode = 'single';
+
+        // API Key handling
+        const savedApiKey = localStorage.getItem('userApiKey') || '';
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+            updateApiKeyStatus(true);
+        }
+
+        apiKeyInput.addEventListener('input', () => {
+            const hasKey = apiKeyInput.value.trim().length > 10;
+            updateApiKeyStatus(hasKey);
+            if (hasKey) {
+                localStorage.setItem('userApiKey', apiKeyInput.value.trim());
+            } else {
+                localStorage.removeItem('userApiKey');
+            }
+        });
+
+        function updateApiKeyStatus(hasKey) {
+            if (hasKey) {
+                apiKeyStatus.textContent = 'Auto-analysis ON';
+                apiKeyStatus.className = 'api-key-status active';
+            } else {
+                apiKeyStatus.textContent = 'Manual mode';
+                apiKeyStatus.className = 'api-key-status inactive';
+            }
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            document.getElementById('theme-icon').textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Mode toggle
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('single-mode-btn').classList.toggle('active', mode === 'single');
+            document.getElementById('batch-mode-btn').classList.toggle('active', mode === 'batch');
+            document.getElementById('single-input').classList.toggle('hidden', mode === 'batch');
+            document.getElementById('batch-input').classList.toggle('active', mode === 'batch');
+            document.getElementById('batch-analyze-btn').style.display = mode === 'batch' ? 'flex' : 'none';
+        }
+
+        // Loading animation
+        function showLoading(step = 'Fetching thread data...') {
+            loadingOverlay.classList.add('active');
+            loadingStep.textContent = step;
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+
+        function updateLoadingStep(step) {
+            loadingStep.textContent = step;
+        }
 
         urlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') analyze();
@@ -687,18 +1201,23 @@
                 return;
             }
 
+            const userApiKey = apiKeyInput.value.trim();
+            
             analyzeBtn.classList.add('loading');
             analyzeBtn.disabled = true;
             errorContainer.innerHTML = '';
             results.classList.remove('active');
+            showLoading('Fetching Reddit thread...');
 
             try {
+                updateLoadingStep('Extracting comments...');
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify({ url, api_key: userApiKey || null })
                 });
 
+                updateLoadingStep('Analyzing with AI...');
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -713,6 +1232,9 @@
                     return;
                 }
 
+                // Save to history
+                saveToHistory(url, data);
+
                 if (data.no_api_key) {
                     displayNoKeyResults(data);
                 } else {
@@ -722,9 +1244,270 @@
             } catch (err) {
                 showError(err.message);
             } finally {
+                hideLoading();
                 analyzeBtn.classList.remove('loading');
                 analyzeBtn.disabled = false;
             }
+        }
+
+        // Batch analysis
+        async function analyzeBatch() {
+            const batchInput = document.getElementById('batch-input');
+            const urls = batchInput.value.trim().split('\n').filter(u => u.trim());
+            
+            if (urls.length === 0) {
+                showError('Please enter at least one Reddit URL');
+                return;
+            }
+
+            if (urls.length > 10) {
+                showError('Maximum 10 URLs per batch');
+                return;
+            }
+
+            const userApiKey = apiKeyInput.value.trim();
+            const batchBtn = document.getElementById('batch-analyze-btn');
+            batchBtn.classList.add('loading');
+            batchBtn.disabled = true;
+            errorContainer.innerHTML = '';
+            results.classList.remove('active');
+            showLoading(`Analyzing ${urls.length} threads...`);
+
+            const allResults = [];
+            let successCount = 0;
+
+            try {
+                for (let i = 0; i < urls.length; i++) {
+                    updateLoadingStep(`Thread ${i + 1}/${urls.length}: ${urls[i].substring(0, 50)}...`);
+                    
+                    try {
+                        const response = await fetch('/analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: urls[i].trim(), api_key: userApiKey || null })
+                        });
+                        const data = await response.json();
+                        if (!data.error) {
+                            allResults.push(data);
+                            successCount++;
+                        }
+                    } catch (e) {
+                        console.error(`Failed to analyze: ${urls[i]}`);
+                    }
+                }
+
+                if (allResults.length > 0) {
+                    updateLoadingStep('Combining results...');
+                    displayBatchResults(allResults);
+                } else {
+                    showError('No threads could be analyzed');
+                }
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                hideLoading();
+                batchBtn.classList.remove('loading');
+                batchBtn.disabled = false;
+            }
+        }
+
+        function displayBatchResults(results) {
+            // Combine all results
+            const combined = {
+                subreddit: results.map(r => r.subreddit).filter(Boolean).join(', '),
+                comment_count: results.reduce((sum, r) => sum + (r.comment_count || 0), 0),
+                summary: `Combined analysis of ${results.length} threads. ` + (results[0]?.summary || ''),
+                pain_points: results.flatMap(r => r.pain_points || []),
+                buying_intent: results.flatMap(r => r.buying_intent || []),
+                unmet_needs: results.flatMap(r => r.unmet_needs || []),
+                objections_and_concerns: results.flatMap(r => r.objections_and_concerns || []),
+                product_ideas: results.flatMap(r => r.product_ideas || []),
+                patterns: results.flatMap(r => r.patterns || []),
+                golden_quotes: results.flatMap(r => r.golden_quotes || []),
+                recommended_next_steps: results.flatMap(r => r.recommended_next_steps || []),
+                raw_data: results.map(r => r.raw_data || '').join('\n\n--- NEXT THREAD ---\n\n')
+            };
+            displayResults(combined);
+        }
+
+        // History management
+        function saveToHistory(url, data) {
+            const entry = {
+                id: Date.now(),
+                url,
+                subreddit: data.subreddit,
+                timestamp: new Date().toISOString(),
+                summary: data.summary?.substring(0, 100) || 'No summary',
+                data
+            };
+            analysisHistory.unshift(entry);
+            if (analysisHistory.length > 20) analysisHistory = analysisHistory.slice(0, 20);
+            localStorage.setItem('analysisHistory', JSON.stringify(analysisHistory));
+        }
+
+        function showHistory() {
+            if (analysisHistory.length === 0) {
+                showError('No analysis history yet');
+                return;
+            }
+            
+            let html = '<div class="history-modal"><h3>📜 Analysis History</h3><div class="history-list">';
+            analysisHistory.forEach(entry => {
+                const date = new Date(entry.timestamp).toLocaleDateString();
+                html += `
+                    <div class="history-item" onclick="loadFromHistory(${entry.id})">
+                        <div class="history-sub">r/${entry.subreddit}</div>
+                        <div class="history-date">${date}</div>
+                        <div class="history-summary">${escapeHtml(entry.summary)}...</div>
+                    </div>
+                `;
+            });
+            html += '</div><button class="copy-btn" onclick="closeHistory()" style="margin-top: 1rem;">Close</button></div>';
+            
+            errorContainer.innerHTML = html;
+        }
+
+        function loadFromHistory(id) {
+            const entry = analysisHistory.find(e => e.id === id);
+            if (entry) {
+                displayResults(entry.data);
+                closeHistory();
+            }
+        }
+
+        function closeHistory() {
+            errorContainer.innerHTML = '';
+        }
+
+        // Export functions
+        function exportToCsv() {
+            const data = getCurrentDisplayedData();
+            if (!data) return;
+
+            let csv = 'Category,Item,Details\n';
+            
+            (data.pain_points || []).forEach(p => {
+                csv += `Pain Point,"${(p.pain || '').replace(/"/g, '""')}","${(p.who_has_it || '').replace(/"/g, '""')}"\n`;
+            });
+            (data.buying_intent || []).forEach(b => {
+                csv += `Buying Intent,"${(b.signal || '').replace(/"/g, '""')}","${(b.urgency || '').replace(/"/g, '""')}"\n`;
+            });
+            (data.product_ideas || []).forEach(i => {
+                csv += `Product Idea,"${(i.idea || '').replace(/"/g, '""')}","${(i.target_customer || '').replace(/"/g, '""')}"\n`;
+            });
+
+            downloadFile(csv, 'reddit-insights.csv', 'text/csv');
+        }
+
+        function exportToJson() {
+            const data = getCurrentDisplayedData();
+            if (!data) return;
+            downloadFile(JSON.stringify(data, null, 2), 'reddit-insights.json', 'application/json');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        let currentDisplayedData = null;
+        function getCurrentDisplayedData() {
+            return currentDisplayedData;
+        }
+
+        // Share functionality
+        async function shareResults() {
+            const data = getCurrentDisplayedData();
+            if (!data) return;
+            
+            try {
+                const response = await fetch('/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.share_id) {
+                    const shareUrl = `${window.location.origin}/s/${result.share_id}`;
+                    await navigator.clipboard.writeText(shareUrl);
+                    showError(`✅ Share link copied: ${shareUrl}`);
+                }
+            } catch (err) {
+                showError('Failed to create share link');
+            }
+        }
+
+        // Copy individual insight
+        async function copyInsight(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                console.error('Copy failed');
+            }
+        }
+
+        // Subreddit Scanner
+        async function scanSubreddit() {
+            const input = document.getElementById('subreddit-input');
+            const scanBtn = document.getElementById('scan-btn');
+            const resultsDiv = document.getElementById('scanner-results');
+            
+            let subreddit = input.value.trim().replace(/^r\//, '');
+            if (!subreddit) {
+                showError('Please enter a subreddit name');
+                return;
+            }
+
+            scanBtn.classList.add('loading');
+            scanBtn.disabled = true;
+            resultsDiv.innerHTML = '<p style="color: var(--text-secondary);">Scanning subreddit...</p>';
+
+            try {
+                const response = await fetch('/scan-subreddit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subreddit })
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p style="color: var(--accent-pink);">⚠️ ${escapeHtml(data.error)}</p>`;
+                    return;
+                }
+
+                let html = '<div class="scanner-results">';
+                (data.threads || []).forEach(thread => {
+                    html += `
+                        <div class="thread-card" onclick="analyzeFromScanner('${escapeHtml(thread.url)}')">
+                            <div class="thread-title">${escapeHtml(thread.title)}</div>
+                            <div class="thread-meta">
+                                <span>💬 ${thread.num_comments} comments</span>
+                                <span>⬆️ ${thread.score} upvotes</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color: var(--accent-pink);">⚠️ ${escapeHtml(err.message)}</p>`;
+            } finally {
+                scanBtn.classList.remove('loading');
+                scanBtn.disabled = false;
+            }
+        }
+
+        function analyzeFromScanner(url) {
+            setMode('single');
+            urlInput.value = url;
+            analyze();
         }
 
         function showError(message) {
@@ -737,6 +1520,9 @@
         }
 
         function displayResults(data) {
+            // Save for export/share
+            currentDisplayedData = data;
+            
             // Hide no-key section
             document.getElementById('no-key-results').style.display = 'none';
 
@@ -864,6 +1650,9 @@
             document.getElementById('raw-data').classList.remove('active');
 
             results.classList.add('active');
+            
+            // Show action buttons
+            document.getElementById('action-buttons').style.display = 'flex';
         }
 
         function toggleRawData() {
