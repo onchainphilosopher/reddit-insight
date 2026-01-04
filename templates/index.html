@@ -1075,11 +1075,6 @@
             </div>
         </section>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons" id="action-buttons" style="display: none;">
-            <button class="action-btn" onclick="shareResults()">🔗 Share Link</button>
-        </div>
-
         <!-- Subreddit Scanner -->
         <section class="scanner-section">
             <h3>🔍 Subreddit Scanner</h3>
@@ -1324,33 +1319,6 @@
             displayResults(combined);
         }
 
-        let currentDisplayedData = null;
-        function getCurrentDisplayedData() {
-            return currentDisplayedData;
-        }
-
-        // Share functionality
-        async function shareResults() {
-            const data = getCurrentDisplayedData();
-            if (!data) return;
-            
-            try {
-                const response = await fetch('/share', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.share_id) {
-                    const shareUrl = `${window.location.origin}/s/${result.share_id}`;
-                    await navigator.clipboard.writeText(shareUrl);
-                    showError(`✅ Share link copied: ${shareUrl}`);
-                }
-            } catch (err) {
-                showError('Failed to create share link');
-            }
-        }
-
         // Copy individual insight
         async function copyInsight(text) {
             try {
@@ -1428,9 +1396,6 @@
         }
 
         function displayResults(data) {
-            // Save for export/share
-            currentDisplayedData = data;
-            
             // Hide no-key section
             document.getElementById('no-key-results').style.display = 'none';
 
@@ -1558,9 +1523,6 @@
             document.getElementById('raw-data').classList.remove('active');
 
             results.classList.add('active');
-            
-            // Show action buttons
-            document.getElementById('action-buttons').style.display = 'flex';
         }
 
         function toggleRawData() {
