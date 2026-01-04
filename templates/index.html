@@ -1103,10 +1103,7 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons" id="action-buttons" style="display: none;">
-            <button class="action-btn" onclick="exportToCsv()">📊 Export CSV</button>
-            <button class="action-btn" onclick="exportToJson()">📄 Export JSON</button>
             <button class="action-btn" onclick="shareResults()">🔗 Share Link</button>
-            <button class="action-btn" onclick="showHistory()">📜 History</button>
         </div>
 
         <!-- Subreddit Scanner -->
@@ -1259,12 +1256,11 @@
                     return;
                 }
 
-                // Save to history
-                saveToHistory(url, data);
-
                 if (data.no_api_key) {
                     displayNoKeyResults(data);
                 } else {
+                    // Only save to history when we have actual analysis results
+                    saveToHistory(url, data);
                     displayResults(data);
                 }
 
@@ -1405,42 +1401,6 @@
 
         function closeHistory() {
             errorContainer.innerHTML = '';
-        }
-
-        // Export functions
-        function exportToCsv() {
-            const data = getCurrentDisplayedData();
-            if (!data) return;
-
-            let csv = 'Category,Item,Details\n';
-            
-            (data.pain_points || []).forEach(p => {
-                csv += `Pain Point,"${(p.pain || '').replace(/"/g, '""')}","${(p.who_has_it || '').replace(/"/g, '""')}"\n`;
-            });
-            (data.buying_intent || []).forEach(b => {
-                csv += `Buying Intent,"${(b.signal || '').replace(/"/g, '""')}","${(b.urgency || '').replace(/"/g, '""')}"\n`;
-            });
-            (data.product_ideas || []).forEach(i => {
-                csv += `Product Idea,"${(i.idea || '').replace(/"/g, '""')}","${(i.target_customer || '').replace(/"/g, '""')}"\n`;
-            });
-
-            downloadFile(csv, 'reddit-insights.csv', 'text/csv');
-        }
-
-        function exportToJson() {
-            const data = getCurrentDisplayedData();
-            if (!data) return;
-            downloadFile(JSON.stringify(data, null, 2), 'reddit-insights.json', 'application/json');
-        }
-
-        function downloadFile(content, filename, type) {
-            const blob = new Blob([content], { type });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
         }
 
         let currentDisplayedData = null;
