@@ -324,8 +324,8 @@ def index():
 def analyze():
     try:
         data = request.get_json()
-        url = data.get('url', '').strip()
-        user_api_key = data.get('api_key', '').strip() or None
+        url = (data.get('url') or '').strip()
+        user_api_key = (data.get('api_key') or '').strip() or None
         
         if not url:
             return jsonify({'error': 'Please provide a Reddit URL'}), 400
