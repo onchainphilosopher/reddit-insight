@@ -562,6 +562,28 @@
             font-size: 1.25rem;
         }
 
+        /* History Toggle */
+        .history-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            z-index: 100;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .history-toggle:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
         /* API Key Input */
         .api-key-section {
             background: var(--bg-card);
@@ -903,6 +925,11 @@
     <!-- Theme Toggle -->
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
         <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+    </button>
+
+    <!-- History Button (always visible) -->
+    <button class="history-toggle" onclick="showHistory()" title="View analysis history">
+        📜 History
     </button>
     
     <div class="container">
